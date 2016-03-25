@@ -9,4 +9,5 @@ public class DataBaseHelper {
     }
 
     public native String stringFromJNI();
+    public native void writeStringToFile(String path, String content);
 }
