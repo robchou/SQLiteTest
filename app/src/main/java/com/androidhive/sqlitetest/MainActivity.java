@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     Context context = MainActivity.this;
     TextView tvMsg;
-    DataBaseHelper dataBaseHelper;
+    NativeTest nativeTest;
     private static final String DATABASE_NAME = "duomai.db";
 
     @Override
@@ -23,13 +23,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dataBaseHelper = new DataBaseHelper();
+        nativeTest = new NativeTest();
 
         tvMsg = (TextView)findViewById(R.id.tv_msg);
-        tvMsg.setText(dataBaseHelper.stringFromJNI());
+        tvMsg.setText(nativeTest.stringFromJNI());
 
         File dbFile = new File(context.getFilesDir(), DATABASE_NAME);
-        dataBaseHelper.writeStringToFile(dbFile.getAbsolutePath(), "Hello, Duomai");
+        nativeTest.writeStringToFile(dbFile.getAbsolutePath(), "Hello, Duomai");
         Log.e(TAG, dbFile.getAbsolutePath());
 
         writeStringToFile("hello", "Hello World!");
