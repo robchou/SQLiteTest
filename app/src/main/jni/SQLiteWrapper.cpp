@@ -3,6 +3,78 @@
 // TODO: raus
 namespace duomai {
     namespace im {
+
+        SQLiteException::SQLiteException(const int error_code,
+                                         const char *error_message,
+                                         bool delete_message) : error_code_(error_code) {
+
+            error_message_ = sqlite3_mprintf("%s[%d]: %s",
+                                             ConvertErrorCodeToString(error_code),
+                                             error_code,
+                                             error_message ? error_message : "");
+            if (delete_message && error_message) {
+                sqlite3_free((void*)error_message);
+            }
+
+        }
+
+        SQLiteException::SQLiteException(const SQLiteException &exception)
+                : error_code_(exception.error_code_) {
+            error_message_ = 0;
+            if (exception.error_message_) {
+                error_message_ = sqlite3_mprintf("%s", exception.error_message_);
+            }
+        }
+
+        SQLiteException::~SQLiteException() {
+            sqlite3_free(error_message_);
+            error_message_ = 0;
+        }
+
+        int SQLiteException::error_code() const {
+            return error_code_;
+        }
+
+        char *SQLiteException::error_message() const {
+            return error_message_;
+        }
+
+        const char *SQLiteException::ConvertErrorCodeToString(int error_code) {
+            switch (error_code)
+            {
+                case SQLITE_OK              : return "SQLITE_OK";
+                case SQLITE_ERROR           : return "SQLITE_ERROR";
+                case SQLITE_INTERNAL        : return "SQLITE_INTERNAL";
+                case SQLITE_PERM            : return "SQLITE_PERM";
+                case SQLITE_ABORT           : return "SQLITE_ABORT";
+                case SQLITE_BUSY            : return "SQLITE_BUSY";
+                case SQLITE_LOCKED          : return "SQLITE_LOCKED";
+                case SQLITE_NOMEM           : return "SQLITE_NOMEM";
+                case SQLITE_READONLY        : return "SQLITE_READONLY";
+                case SQLITE_INTERRUPT       : return "SQLITE_INTERRUPT";
+                case SQLITE_IOERR           : return "SQLITE_IOERR";
+                case SQLITE_CORRUPT         : return "SQLITE_CORRUPT";
+                case SQLITE_NOTFOUND        : return "SQLITE_NOTFOUND";
+                case SQLITE_FULL            : return "SQLITE_FULL";
+                case SQLITE_CANTOPEN        : return "SQLITE_CANTOPEN";
+                case SQLITE_PROTOCOL        : return "SQLITE_PROTOCOL";
+                case SQLITE_EMPTY           : return "SQLITE_EMPTY";
+                case SQLITE_SCHEMA          : return "SQLITE_SCHEMA";
+                case SQLITE_TOOBIG          : return "SQLITE_TOOBIG";
+                case SQLITE_CONSTRAINT      : return "SQLITE_CONSTRAINT";
+                case SQLITE_MISMATCH        : return "SQLITE_MISMATCH";
+                case SQLITE_MISUSE          : return "SQLITE_MISUSE";
+                case SQLITE_NOLFS           : return "SQLITE_NOLFS";
+                case SQLITE_AUTH            : return "SQLITE_AUTH";
+                case SQLITE_FORMAT          : return "SQLITE_FORMAT";
+                case SQLITE_RANGE           : return "SQLITE_RANGE";
+                case SQLITE_ROW             : return "SQLITE_ROW";
+                case SQLITE_DONE            : return "SQLITE_DONE";
+                case SQLITE_WRAPPER_ERROR   : return "SQLITE_WRAPPER_ERROR";
+                default                     : return "UNKNOWN_ERROR";
+            }
+        }
+
         SQLiteWrapper::SQLiteWrapper() : db_(0) {
         }
 
@@ -75,13 +147,13 @@ namespace duomai {
 
         SQLiteStatement::SQLiteStatement(std::string const& statement, sqlite3* db) {
             if ( sqlite3_prepare(
-                        db,
-                        statement.c_str(),  // stmt
-                        -1,                  // If than zero, then stmt is read up to the first nul terminator
-                        &stmt_,
-                        0                   // Pointer to unused portion of stmt
-                        )
-                    != SQLITE_OK) {
+                    db,
+                    statement.c_str(),  // stmt
+                    -1,                  // If than zero, then stmt is read up to the first nul terminator
+                    &stmt_,
+                    0                   // Pointer to unused portion of stmt
+            )
+                 != SQLITE_OK) {
                 throw sqlite3_errmsg(db);
             }
 
@@ -98,19 +170,19 @@ namespace duomai {
         }
 
         SQLiteStatement::SQLiteStatement() :
-            stmt_       (0)
+                stmt_       (0)
         {
         }
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, std::string const& value) {
             if (sqlite3_bind_text (
-                        stmt_,
-                        pos_zero_indexed+1,  // Index of wildcard
-                        value.c_str(),
-                        value.length(),      // length of text
-                        SQLITE_TRANSIENT     // SQLITE_TRANSIENT: SQLite makes its own copy
-                        )
-                    != SQLITE_OK) {
+                    stmt_,
+                    pos_zero_indexed+1,  // Index of wildcard
+                    value.c_str(),
+                    value.length(),      // length of text
+                    SQLITE_TRANSIENT     // SQLITE_TRANSIENT: SQLite makes its own copy
+            )
+                != SQLITE_OK) {
                 return false;
             }
             return true;
@@ -118,11 +190,11 @@ namespace duomai {
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, double value) {
             if (sqlite3_bind_double(
-                        stmt_,
-                        pos_zero_indexed+1,  // Index of wildcard
-                        value
-                        )
-                    != SQLITE_OK) {
+                    stmt_,
+                    pos_zero_indexed+1,  // Index of wildcard
+                    value
+            )
+                != SQLITE_OK) {
                 return false;
             }
             return true;
@@ -130,11 +202,11 @@ namespace duomai {
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, int value) {
             if (sqlite3_bind_int(
-                        stmt_,
-                        pos_zero_indexed+1,  // Index of wildcard
-                        value
-                        )
-                    != SQLITE_OK) {
+                    stmt_,
+                    pos_zero_indexed+1,  // Index of wildcard
+                    value
+            )
+                != SQLITE_OK) {
                 return false;
             }
             return true;
@@ -142,10 +214,10 @@ namespace duomai {
 
         bool SQLiteStatement::BindNull(int pos_zero_indexed) {
             if (sqlite3_bind_null(
-                        stmt_,
-                        pos_zero_indexed+1  // Index of wildcard
-                        )
-                    != SQLITE_OK) {
+                    stmt_,
+                    pos_zero_indexed+1  // Index of wildcard
+            )
+                != SQLITE_OK) {
                 return false;
             }
             return true;
@@ -252,5 +324,6 @@ namespace duomai {
         bool SQLiteWrapper::Rollback() {
             return execSQL("rollback");
         }
+
     }
 }

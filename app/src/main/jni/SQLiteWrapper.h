@@ -6,108 +6,127 @@
 
 #include "wxsqlite3/sqlite3.h"
 
+#define SQLITE_WRAPPER_ERROR 1000
+
 namespace duomai {
     namespace im {
+        class SQLiteException {
+        public:
+            SQLiteException(const int error_code,
+                            const char* error_message,
+                            bool delete_message = true);
+            SQLiteException(const SQLiteException& exception);
+
+            virtual ~SQLiteException();
+            static const char* ConvertErrorCodeToString(int error_code);
+            int error_code()const;
+            char* error_message() const;
+
+        private:
+            int error_code_;
+            char* error_message_;
+        };
+
         class SQLiteStatement {
-            private:
-                // SQLiteStatement's ctor only to be called by SQLiteWrapper
-                friend class SQLiteWrapper;
-                SQLiteStatement(std::string const& statement, sqlite3* db);
+        private:
+            // SQLiteStatement's ctor only to be called by SQLiteWrapper
+            friend class SQLiteWrapper;
+            SQLiteStatement(std::string const& statement, sqlite3* db);
 
-            public:
-                SQLiteStatement();
+        public:
+            SQLiteStatement();
 
-                enum dataType {
-                    INT = SQLITE_INTEGER,
-                    FLT = SQLITE_FLOAT  ,
-                    TXT = SQLITE_TEXT   ,
-                    BLB = SQLITE_BLOB   ,
-                    NUL = SQLITE_NULL   ,
-                };
+            enum dataType {
+                INT = SQLITE_INTEGER,
+                FLT = SQLITE_FLOAT  ,
+                TXT = SQLITE_TEXT   ,
+                BLB = SQLITE_BLOB   ,
+                NUL = SQLITE_NULL   ,
+            };
 
-                dataType DataType(int pos_zero_indexed);
+            dataType DataType(int pos_zero_indexed);
 
-                int         ValueInt   (int pos_zero_indexed);
-                std::string ValueString(int pos_zero_indexed);
+            int         ValueInt   (int pos_zero_indexed);
+            std::string ValueString(int pos_zero_indexed);
 
-                //    SQLiteStatement(const SQLiteStatement&);
-                ~SQLiteStatement();
+            //    SQLiteStatement(const SQLiteStatement&);
+            ~SQLiteStatement();
 
-                //SQLiteStatement& operator=(SQLiteStatement const&);
+            //SQLiteStatement& operator=(SQLiteStatement const&);
 
-                bool Bind    (int pos_zero_indexed, std::string const& value);
-                bool Bind    (int pos_zero_indexed, double             value);
-                bool Bind    (int pos_zero_indexed, int                value);
-                bool BindNull(int pos_zero_indexed);
+            bool Bind    (int pos_zero_indexed, std::string const& value);
+            bool Bind    (int pos_zero_indexed, double             value);
+            bool Bind    (int pos_zero_indexed, int                value);
+            bool BindNull(int pos_zero_indexed);
 
-                bool Execute();
+            bool Execute();
 
-                bool NextRow();
+            bool NextRow();
 
-                /*   Call Reset if not depending on the NextRow cleaning up.
-                     For example for select count(*) statements*/
-                bool Reset();
+            /*   Call Reset if not depending on the NextRow cleaning up.
+                 For example for select count(*) statements*/
+            bool Reset();
 
-                bool RestartSelect();
+            bool RestartSelect();
 
-            private:
-                //void DecreaseRefCounter();
+        private:
+            //void DecreaseRefCounter();
 
-                //int* ref_counter_; // not yet used...
-                sqlite3_stmt* stmt_;
+            //int* ref_counter_; // not yet used...
+            sqlite3_stmt* stmt_;
         };
 
         class SQLiteWrapper {
+        public:
+            SQLiteWrapper();
+
+            bool Open(std::string const& db_file);
+
+            class ResultRecord {
             public:
-                SQLiteWrapper();
+                std::vector<std::string> fields_;
+            };
 
-                bool Open(std::string const& db_file);
+            class ResultTable {
+                friend class SQLiteWrapper;
+            public:
+                ResultTable() : ptr_cur_record_(0) {}
 
-                class ResultRecord {
-                    public:
-                        std::vector<std::string> fields_;
-                };
+                std::vector<ResultRecord> records_;
 
-                class ResultTable {
-                    friend class SQLiteWrapper;
-                    public:
-                    ResultTable() : ptr_cur_record_(0) {}
-
-                    std::vector<ResultRecord> records_;
-
-                    ResultRecord* next() {
-                        if (ptr_cur_record_ < records_.size()) {
-                            return &(records_[ptr_cur_record_++]);
-                        }
-                        return 0;
+                ResultRecord* next() {
+                    if (ptr_cur_record_ < records_.size()) {
+                        return &(records_[ptr_cur_record_++]);
                     }
-
-                    private:
-                    void reset() {
-                        records_.clear();
-                        ptr_cur_record_=0;
-                    }
-
-                    private:
-                    unsigned int ptr_cur_record_;
-                };
-
-                bool SelectStmt           (std::string const& stmt, ResultTable& res);
-                bool execSQL(std::string const &stmt);
-                SQLiteStatement* Statement(std::string const& stmt);
-
-                std::string LastError();
-
-                // Transaction related
-                bool Begin   ();
-                bool Commit  ();
-                bool Rollback();
+                    return 0;
+                }
 
             private:
+                void reset() {
+                    records_.clear();
+                    ptr_cur_record_=0;
+                }
 
-                static int SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names);
+            private:
+                unsigned int ptr_cur_record_;
+            };
 
-                sqlite3* db_;
+            bool SelectStmt           (std::string const& stmt, ResultTable& res);
+            bool execSQL(std::string const &stmt);
+            SQLiteStatement* Statement(std::string const& stmt);
+
+            std::string LastError();
+
+            // Transaction related
+            bool Begin   ();
+            bool Commit  ();
+            bool Rollback();
+
+        private:
+
+            static int SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names);
+
+            sqlite3* db_;
         };
 
     }
