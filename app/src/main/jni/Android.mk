@@ -3,8 +3,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_CPP_EXTENSION := .cc .cpp
+LOCAL_CPPFLAGS += -fexceptions
 
-LOCAL_SRC_FILES += IM.cpp
+LOCAL_SRC_FILES += IM.cpp SQLiteWrapper.cpp
 
 LOCAL_STATIC_LIBRARIES := wxsqlite3
 
