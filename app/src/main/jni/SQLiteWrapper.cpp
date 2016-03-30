@@ -1,5 +1,6 @@
 #include <iostream>
 #include "SQLiteWrapper.h"
+#include "Log.h"
 // TODO: raus
 namespace duomai {
     namespace im {
@@ -14,6 +15,7 @@ namespace duomai {
                                              error_message ? error_message : "");
             if (delete_message && error_message) {
                 sqlite3_free((void*)error_message);
+                LOGE("%s", error_message_);
             }
 
         }
@@ -23,6 +25,7 @@ namespace duomai {
             error_message_ = 0;
             if (exception.error_message_) {
                 error_message_ = sqlite3_mprintf("%s", exception.error_message_);
+                LOGE("%s", error_message_);
             }
         }
 
@@ -80,6 +83,7 @@ namespace duomai {
 
         bool SQLiteWrapper::Open(std::string const& db_file) {
             if (sqlite3_open(db_file.c_str(), &db_) != SQLITE_OK) {
+                LOGE("Open database %s failed", db_file.c_str());
                 return false;
             }
             return true;
@@ -94,6 +98,7 @@ namespace duomai {
             ret = sqlite3_exec(db_, stmt.c_str(), SelectCallback, static_cast<void*> (&res), &errmsg);
 
             if (ret != SQLITE_OK) {
+                LOGE("%s return %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(ret));
                 return false;
             }
             return true;
@@ -154,11 +159,11 @@ namespace duomai {
                     0                   // Pointer to unused portion of stmt
             )
                  != SQLITE_OK) {
-                throw sqlite3_errmsg(db);
+                LOGE("%s : %s", __FUNCTION__, sqlite3_errmsg(db));
             }
 
             if (!stmt_) {
-                throw "stmt_ is 0";
+                LOGE("%s : stmt_ is 0", __FUNCTION__);
             }
         }
 
@@ -175,49 +180,59 @@ namespace duomai {
         }
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, std::string const& value) {
-            if (sqlite3_bind_text (
+
+            int rc = sqlite3_bind_text (
                     stmt_,
                     pos_zero_indexed+1,  // Index of wildcard
                     value.c_str(),
                     value.length(),      // length of text
                     SQLITE_TRANSIENT     // SQLITE_TRANSIENT: SQLite makes its own copy
-            )
-                != SQLITE_OK) {
+            );
+
+            if (rc != SQLITE_OK) {
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             return true;
         }
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, double value) {
-            if (sqlite3_bind_double(
+
+            int rc = sqlite3_bind_double(
                     stmt_,
                     pos_zero_indexed+1,  // Index of wildcard
                     value
-            )
-                != SQLITE_OK) {
+            );
+            if (rc != SQLITE_OK) {
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             return true;
         }
 
         bool SQLiteStatement::Bind(int pos_zero_indexed, int value) {
-            if (sqlite3_bind_int(
+
+            int rc = sqlite3_bind_int(
                     stmt_,
                     pos_zero_indexed+1,  // Index of wildcard
                     value
-            )
-                != SQLITE_OK) {
+            );
+            if (rc != SQLITE_OK) {
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             return true;
         }
 
         bool SQLiteStatement::BindNull(int pos_zero_indexed) {
-            if (sqlite3_bind_null(
+
+            int rc = sqlite3_bind_null(
                     stmt_,
                     pos_zero_indexed+1  // Index of wildcard
-            )
-                != SQLITE_OK) {
+            );
+
+            if (rc != SQLITE_OK) {
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             return true;
@@ -226,18 +241,19 @@ namespace duomai {
         bool SQLiteStatement::Execute() {
             int rc = sqlite3_step(stmt_);
             if (rc == SQLITE_BUSY) {
-                std::cout << "SQLITE_BUSY" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             if (rc == SQLITE_ERROR) {
-                std::cout << "SQLITE_ERROR" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             if (rc == SQLITE_MISUSE) {
-                std::cout << "SQLITE_ERROR" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             if (rc != SQLITE_DONE) {
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 //sqlite3_reset(stmt_);
                 return false;
             }
@@ -279,16 +295,17 @@ namespace duomai {
             }
             if (rc == SQLITE_DONE  ) {
                 sqlite3_reset(stmt_);
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
                 return false;
             }
             else if (rc == SQLITE_MISUSE) {
-                std::cout << "SQLiteStatement::NextRow SQLITE_MISUSE" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
             }
             else if (rc == SQLITE_BUSY  ) {
-                std::cout << "SQLiteStatement::NextRow SQLITE_BUSY" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
             }
             else if (rc == SQLITE_ERROR ) {
-                std::cout << "SQLiteStatement::NextRow SQLITE_ERROR" << std::endl;
+                LOGE("%s : %s", __FUNCTION__, SQLiteException::ConvertErrorCodeToString(rc));
             }
             return false;
         }
