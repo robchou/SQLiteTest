@@ -2,9 +2,8 @@ package com.androidhive.sqlitetest;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import java.io.File;
@@ -22,18 +21,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         nativeTest = new NativeTest();
-
         tvMsg = (TextView)findViewById(R.id.tv_msg);
-        tvMsg.setText(nativeTest.stringFromJNI());
 
-        File dbFile = new File(context.getFilesDir(), DATABASE_NAME);
-        nativeTest.writeStringToFile(dbFile.getAbsolutePath(), "Hello, Duomai");
-        Log.e(TAG, dbFile.getAbsolutePath());
-
-        writeStringToFile("hello", "Hello World!");
-        getTempFile(context, "hello");
     }
 
     //Write string to private file
