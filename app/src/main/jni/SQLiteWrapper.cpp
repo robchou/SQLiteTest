@@ -293,7 +293,7 @@ namespace duomai {
             return false;
         }
 
-        bool SQLiteWrapper::execSQL(std::string const &stmt) {
+        bool SQLiteWrapper::ExecSQL(std::string const &stmt) {
             char *errmsg;
             int   ret;
 
@@ -314,15 +314,15 @@ namespace duomai {
         }
 
         bool SQLiteWrapper::Begin() {
-            return execSQL("begin");
+            return ExecSQL("begin");
         }
 
         bool SQLiteWrapper::Commit() {
-            return execSQL("commit");
+            return ExecSQL("commit");
         }
 
         bool SQLiteWrapper::Rollback() {
-            return execSQL("rollback");
+            return ExecSQL("rollback");
         }
 
     }

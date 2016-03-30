@@ -112,7 +112,7 @@ namespace duomai {
             };
 
             bool SelectStmt           (std::string const& stmt, ResultTable& res);
-            bool execSQL(std::string const &stmt);
+            bool ExecSQL(std::string const &stmt);
             SQLiteStatement* Statement(std::string const& stmt);
 
             std::string LastError();
