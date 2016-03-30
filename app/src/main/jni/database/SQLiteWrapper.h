@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "wxsqlite3/sqlite3.h"
+#include "../thirdpart/wxsqlite3/sqlite3.h"
 
 #define SQLITE_WRAPPER_ERROR 1000
 

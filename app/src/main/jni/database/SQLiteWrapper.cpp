@@ -1,6 +1,6 @@
 #include <iostream>
 #include "SQLiteWrapper.h"
-#include "Log.h"
+#include "../Log.h"
 // TODO: raus
 namespace duomai {
     namespace im {
